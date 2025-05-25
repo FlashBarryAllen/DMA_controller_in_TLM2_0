@@ -1,4 +1,4 @@
-SYSTEMC_DIR = /usr/local/systemc-2.3.3
+SYSTEMC_DIR = ../systemc
 TARGET     = DMA
 BUILDFLAGS  = -g3
 CXX         = g++ -pthread
