@@ -192,6 +192,8 @@ void DMA::dma() {
 			interrupt.write(0);
 		}
 		wait();
+
+		delete trans_m;
 	}
 }
 

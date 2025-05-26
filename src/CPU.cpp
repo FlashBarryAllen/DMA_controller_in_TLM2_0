@@ -81,6 +81,8 @@ void CPU::cpu()
 				addrBias = addrBias + 4;
 				state = state + 1;
 			}
+
+			delete cpu_m;
 		}
 		if(interrupt.read() == 1)
 		{
