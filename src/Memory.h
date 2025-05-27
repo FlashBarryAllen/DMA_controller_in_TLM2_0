@@ -16,7 +16,8 @@ SC_MODULE(Memory)
 	tlm_utils::simple_target_socket<Memory> socket_s;
 	int memsource[MEMSIZE];
 	int memtarget[MEMSIZE];
-	
+	int mem[MEMSIZE];
+
 	virtual void b_transport( tlm::tlm_generic_payload&, sc_time& );
 	
 	SC_CTOR(Memory) : socket_s("socket_s") 
@@ -30,6 +31,10 @@ SC_MODULE(Memory)
 		for (int i = 0; i < MEMSIZE; i++)
 		{
 			memtarget[i] = rand() % 256;
+		}
+		for (int i = 0; i < MEMSIZE; i++)
+		{
+			mem[i] = rand() % 256;
 		}
 	}
 };

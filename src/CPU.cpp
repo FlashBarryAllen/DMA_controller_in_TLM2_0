@@ -22,10 +22,11 @@ void CPU::cpu()
 			tlm::tlm_generic_payload *cpu_m = new tlm::tlm_generic_payload;
 			sc_time delay = sc_time(10,SC_NS);
 			unsigned int source = 0xaa000000;
-			unsigned int target = 0xbb000000;
+			unsigned int target = 0xaa000000;
 			unsigned int size	= 0x00000020; // 32byte
+			unsigned int dir	= 0x00000001; // 0: device to host, 1: host to device
 			unsigned int start	= 0x00000001;
-			while(state < 4) 
+			while(state < 5) 
 			{
 				if(state == 0) 
 				{
@@ -67,7 +68,20 @@ void CPU::cpu()
 				}
 				else if(state == 3) 
 				{
-					cout << "--- state 3 CPU write start to DMA" << endl;
+					cout << "--- state 3 CPU write dir to DMA" << endl;
+					cpu_m->set_command(tlm::TLM_WRITE_COMMAND);
+					cpu_m->set_address(baseAddr_of_DMA + addrBias);
+					cpu_m->set_data_ptr(reinterpret_cast<unsigned char*>(&dir) );
+					cpu_m->set_data_length(4);
+					cpu_m->set_streaming_width(4);
+					cpu_m->set_byte_enable_ptr(0);
+					cpu_m->set_dmi_allowed(false);
+					cpu_m->set_response_status(tlm::TLM_INCOMPLETE_RESPONSE );
+					socket_m->b_transport(*cpu_m, delay);
+				}
+				else if(state == 4) 
+				{
+					cout << "--- state 4 CPU write start to DMA" << endl;
 					cpu_m->set_command(tlm::TLM_WRITE_COMMAND);
 					cpu_m->set_address(baseAddr_of_DMA + addrBias);
 					cpu_m->set_data_ptr(reinterpret_cast<unsigned char*>(&start) );
@@ -77,7 +91,7 @@ void CPU::cpu()
 					cpu_m->set_dmi_allowed(false);
 					cpu_m->set_response_status(tlm::TLM_INCOMPLETE_RESPONSE );
 					socket_m->b_transport(*cpu_m, delay);
-				}
+				} 
 				addrBias = addrBias + 4;
 				state = state + 1;
 			}

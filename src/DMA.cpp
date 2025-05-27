@@ -73,8 +73,8 @@ void DMA::dma() {
 			R_SOURCE = 0;
 			R_TARGET = 0;
 			R_SIZE = 0;
+			R_DIR = 3; // default value
 			R_START = 0;
-			R_SIZE = 0;
 			temp_source = 0;
 			temp_target = 0;
 			if(clear.read() == 1)
@@ -111,19 +111,28 @@ void DMA::dma() {
 				} 
 				else if(addr_bais == 0xc) 
 				{
+					R_DIR = slave.data;
+				}
+				else if(addr_bais == 0x10) 
+				{
 					R_START = slave.data;
+				}
+				else 
+				{
+					cout << "DMA: Invalid address" << endl;
 				}
 				#ifdef DEBUGMODE
 				cout << "Command : " << (s_rw ? "write" : "read") <<endl;
 				cout << "R_SOURCE : " << R_SOURCE <<endl;
 				cout << "R_TARGET : " << R_TARGET <<endl;
 				cout << "R_SIZE : " << R_SIZE <<endl;
+				cout << "R_DIR : " << R_DIR <<endl;
 				cout << "R_START : " << R_START << endl; 
 				#endif
 			}
 		}
 
-		if(R_START == 1 && R_SIZE != 0) 
+		if(R_START == 1 && R_SIZE != 0 && R_DIR != 3) 
 		{
 			temp_source = R_SOURCE;
 			temp_target = R_TARGET;
@@ -142,7 +151,6 @@ void DMA::dma() {
 				{
 					if(count == 0) 
 					{
-						cout << ">> DMA read data from source memory" << endl;
 						trans_m->set_command(tlm::TLM_READ_COMMAND);
 						trans_m->set_address(temp_source);
 						trans_m->set_data_ptr( reinterpret_cast<unsigned char*>(&data_m) );
@@ -151,11 +159,19 @@ void DMA::dma() {
 						trans_m->set_byte_enable_ptr(0);
 						trans_m->set_dmi_allowed(false);
 						trans_m->set_response_status(tlm::TLM_INCOMPLETE_RESPONSE);
-						socket_m->b_transport(*trans_m, delay );
+						if (R_DIR == 0) 
+						{
+							cout << ">> DMA read data from dev memory" << endl;
+							socket_dev_m->b_transport(*trans_m, delay);
+						} 
+						else if (R_DIR == 1) 
+						{
+							cout << ">> DMA read data from host memory" << endl;
+							socket_host_m->b_transport(*trans_m, delay);
+						}
 					} 
 					else if(count == 1) 
 					{
-						cout << ">> DMA write data to target memory" << endl;
 						trans_m->set_command(tlm::TLM_WRITE_COMMAND);
 						trans_m->set_address(temp_target);
 						trans_m->set_data_ptr( reinterpret_cast<unsigned char*>(&data_m) );
@@ -164,7 +180,16 @@ void DMA::dma() {
 						trans_m->set_byte_enable_ptr(0);
 						trans_m->set_dmi_allowed(false);
 						trans_m->set_response_status(tlm::TLM_INCOMPLETE_RESPONSE);
-						socket_m->b_transport(*trans_m, delay);
+						if (R_DIR == 0) 
+						{
+							cout << ">> DMA write data to host memory" << endl;
+							socket_host_m->b_transport(*trans_m, delay);
+						}
+						else if (R_DIR == 1) 
+						{
+							cout << ">> DMA write data to dev memory" << endl;
+							socket_dev_m->b_transport(*trans_m, delay);
+						}
 					}
 					count = count + 1;
 					R_data = *(reinterpret_cast<int*>(&data_m));

@@ -29,12 +29,14 @@ SC_MODULE(DMA)
 	struct port slave;
 	
 	tlm_utils::simple_target_socket<DMA> socket_s;
-	tlm_utils::simple_initiator_socket<DMA> socket_m;
+	tlm_utils::simple_initiator_socket<DMA> socket_host_m;
+	tlm_utils::simple_initiator_socket<DMA> socket_dev_m;
 
 	/*---- Contorl register ----*/
 	sc_uint<32> R_SOURCE;
 	sc_uint<32> R_TARGET;
 	sc_uint<32> R_SIZE;
+	sc_uint<32> R_DIR;
 	bool R_START;
 	/*---- ----------------- ----*/
 	
@@ -46,13 +48,14 @@ SC_MODULE(DMA)
 	void dma();
 	void b_transport(tlm::tlm_generic_payload&, sc_time&);
 	
-	SC_CTOR(DMA) : socket_s("socket_s"), socket_m("socket_m") {
+	SC_CTOR(DMA) : socket_s("socket_s"), socket_host_m("socket_host_m"), socket_dev_m("socket_dev_m") {
 		socket_s.register_b_transport(this, &DMA::b_transport);
 
 		SC_CTHREAD(dma,clock.pos());
 		reset_signal_is(reset,false);
 
 		DMA_baseaddr = 0xa0000000;
+		R_DIR = 3;
 	}
 };
 
